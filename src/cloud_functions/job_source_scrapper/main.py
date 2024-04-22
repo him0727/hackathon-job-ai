@@ -1,7 +1,3 @@
-import google.cloud.logging
-log_client = google.cloud.logging.Client()
-log_client.setup_logging()
-
 import logging
 import json
 import time
@@ -11,6 +7,9 @@ import requests
 import functions_framework
 from bs4 import BeautifulSoup
 from google.cloud import bigquery
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 API_HOST = "https://api.mycareersfuture.gov.sg/v2"
 BQ_RAW_DATA_TABLE = "jobai-420303.jobai_data.job_data_raw"
@@ -84,7 +83,7 @@ def process_job(job):
             "employment_type": [x["employmentType"] for x in job["employmentTypes"]],
             "status": job["status"]["jobStatus"]
         }
-        jd = scrape_jd(job['uuid'])
+        jd = scrape_jd(job["uuid"])
         if not jd:
             return None
         record.update({
@@ -122,9 +121,9 @@ def bigquery_insert(bq_client, job_data):
 @functions_framework.http
 def main(request):
     payload = request.get_json(silent=True)
-    start_page = payload.get('start_page', 0)
-    end_page = start_page + payload.get('running_pages', 1) - 1
-    limit = payload.get('limit', 50)
-    chunk_size = payload.get('chunk_size', 200)
+    start_page = payload.get("start_page", 0)
+    end_page = start_page + payload.get("running_pages", 1) - 1
+    limit = payload.get("limit", 50)
+    chunk_size = payload.get("chunk_size", 200)
     process(start_page, end_page, limit, chunk_size)
     return "OK"

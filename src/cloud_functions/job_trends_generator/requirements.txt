@@ -1,0 +1,9 @@
+scikit-learn==1.4.2
+numpy==1.26.4
+langchain==0.1.16
+langchain-core==0.1.45
+langchain-community==0.0.34
+google-cloud-storage==2.15.0
+google-cloud-bigquery==3.14.1
+google-cloud-aiplatform>=1.38.0
+functions-framework==3.*
