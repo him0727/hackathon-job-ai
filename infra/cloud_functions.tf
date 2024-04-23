@@ -65,14 +65,14 @@ resource "google_cloudfunctions2_function" "job_trends_generator" {
   }
 
   service_config {
-    max_instance_count = 10
-    available_memory   = "2G"
-    available_cpu      = 2
+    max_instance_count = 15
+    available_memory   = "3G"
+    available_cpu      = 4
     timeout_seconds    = 500
   }
-  
+
   event_trigger {
-    event_type = "google.cloud.pubsub.topic.v1.messagePublished"
+    event_type   = "google.cloud.pubsub.topic.v1.messagePublished"
     pubsub_topic = google_pubsub_topic.job_trends_generation.id
     retry_policy = "RETRY_POLICY_RETRY"
   }
