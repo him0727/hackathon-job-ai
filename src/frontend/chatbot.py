@@ -33,10 +33,10 @@ def question_check(message, history):
 if __name__ == "__main__":
     gr.ChatInterface(
         question_check,
-        chatbot=gr.Chatbot(height=300),
-        textbox=gr.Textbox(placeholder="Ask me a yes or no question", container=False, scale=7),
+        chatbot=gr.Chatbot(height=700),
+        textbox=gr.Textbox(placeholder="Tell me about your career background, please start with `title:` you looking for.", container=False, scale=7),
         title="Job AI",
-        description="Ask Yes Man any question",
+        description="JobAI help you to look for a job match with your profile and provide market insights to get you prepare for the job",
         theme="soft",
         examples=["Hello", "Am I cool?", "Are tomatoes vegetables?"],
         cache_examples=True,
