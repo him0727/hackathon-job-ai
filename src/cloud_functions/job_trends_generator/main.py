@@ -91,7 +91,7 @@ def generate_results(records):
     combine_prompt_template = """
         Write a concise summary of the following text delimited by triple backquotes.
         The summary must list the top 5 market trends with elaboration and the top 10 most common skills.
-        Return a JSON document with a "trends" and an "skills" property, following this structure: {{"trends": ["trend"], "skills": ["skill"]}}.
+        Return a JSON document with a "trends" and a "skills" property, following this structure: {{"trends": ["trend"], "skills": ["skill"]}}.
         The "trends" property must not have more than 5 elements, and "skills" property must not have more than 10 elements.
         Return only JSON, without any markdown markup surrounding it. Do not include duplicate information.
         Here is the text:
