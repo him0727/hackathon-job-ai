@@ -63,10 +63,10 @@ def get_market_trend():
 
 
 def msg_handler(message, history):
-    message = message.strip().lower()
-    if message.startswith("/match"):
+    message = message.strip()
+    if message.lower().startswith("/match"):
         resp = "Here are some recommended jobs for you:<br>"
-        recommendations = get_recommendation(message[11:])
+        recommendations = get_recommendation(message[6:])
         unique_categories = set()
         resp += "<ul style=\"text-indent:-20px; margin-left:20px\">"
         for i, job in enumerate(recommendations):
@@ -89,16 +89,16 @@ def msg_handler(message, history):
             else:
                 resp += "- N/A<br>"
         return resp
-    elif message.startswith("/ask"):
+    elif message.lower().startswith("/ask"):
         questions = generate_question(message.split('-')[-1])
         resp = "Here some potential interview questions for the job:"
         resp += "<ul style=\"text-indent:-20px; margin-left:20px\">"
         resp += "".join([f"<li>{x}</li>" for x in questions])
         resp += "</ul>"
         return resp
-    elif message == "/help":
+    elif message.lower() == "/help":
         return HELP_MSG
-    return "Sorry I don't understand your instructions. You may try /help to input the correct command."
+    return "Sorry I don't understand your instructions. You may type /help to find the correct command."
 
 
 gr.ChatInterface(
