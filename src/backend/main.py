@@ -36,7 +36,8 @@ def get_trends():
         GROUP BY category
     """
     data = [
-        {"category": row["category"], "summary": json.loads(row["summary"])} for row in bq_client.query_and_wait(query)
+        {"category": row["category"], "summary": json.loads(row["summary"])} 
+        for row in bq_client.query_and_wait(query)
     ]
     TRENDS_CACHE = {"last_updated": datetime.now(), "summaries": data}
     
@@ -48,7 +49,7 @@ def get_recommendations():
     top_k = int(request.args.get('topk', 5))
     if top_k > 10 or top_k <= 0 or not request.data:
         logger.info("Received invalid payload from user.")
-        return jsonify({"error": "Invalid top_k parameter or empty payload."}), 400
+        return jsonify({"error": "Invalid topk parameter (> 0 and <= 10) or empty payload."}), 400
     
     embedding = embedding_model.get_embeddings([request.data.decode("utf-8")])[0].values
     recommend_jobs_ids_query = f"""
@@ -67,15 +68,16 @@ def get_recommendations():
     logger.info(f"Job recommendations: {top_jobs_ids}")
     
     recommend_jobs_data_query = f"""
-        SELECT id, title, company, url 
+        SELECT id, title, company, url, categories 
         FROM `{BQ_JOBS_TABLE}` 
         WHERE id IN ({top_jobs_ids})
     """
     recommend_jobs = bq_client.query(recommend_jobs_data_query)
     
-    return jsonify(
-        {"data": [{"id": row["id"], "title": row["title"], "company": row["company"], "url": row["url"]} for row in recommend_jobs.result()]}
-    )
+    return jsonify({"data": [
+        {"id": row["id"], "title": row["title"], "company": row["company"], "url": row["url"], "categories": json.loads(row["categories"])} 
+        for row in recommend_jobs.result()
+    ]})
 
 
 @app.route("/questions/<id>", methods=["GET"])

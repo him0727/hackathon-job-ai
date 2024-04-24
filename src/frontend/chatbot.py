@@ -1,50 +1,114 @@
-import gradio as gr
 import requests
+import gradio as gr
 
-market_trend_data = None
+HELP_MSG = """
+<table style="width:100%">
+  <tr>
+    <th>Command</th>
+    <th>Usage</th>
+    <th>Response</th>
+  </tr>
+  <tr>
+    <td>/match {ANY_TEXT}</td>
+    <td>{ANY_TEXT} is a text that describes your background, like academic background, work experience, skills, what are you looking for, expected salary, etc.</td>
+    <td>Return top 6 jobs that best matches your background and some market trends for those jobs' industry.</td>
+  </tr>
+  <tr>
+    <td>/ask {JOB_URL}</td>
+    <td>{JOB_URL} is the job link retrieved from /match. Just pick your interested job's link.</td>
+    <td>Return some potential interview questions for that role that covers its company values and job requirements.</td>
+  </tr>
+  <tr>
+    <td>/help</td>
+    <td>No extra argument.</td>
+    <td>Help menu.</td>
+  </tr>
+</table>
+"""
+
+WELCOME_MSG = f"""
+<strong>Welcome to Job AI!</strong>
+<i>Our cutting-edge solution harnesses the immense power of Large Language and Machine Learning models to revolutionize the job-seeking experience.</i><br>
+<strong>Data-Driven Insights</strong> + <strong>Tailored Recommendations</strong> + <strong>Guided Journey</strong>
+<br><br>
+Get started:
+{HELP_MSG}
+"""
+
+BACKEND_HOST = "https://jobai-backend-p34gqsegoa-as.a.run.app"
+MARKET_TREND_DATA = {}
+
 
 def get_recommendation(message):
-    url = 'https://manual-jobai-backend-p34gqsegoa-as.a.run.app/recommendations?topk=6'
-    headers = {'Content-Type': 'text/plain'}
+    url = f"{BACKEND_HOST}/recommendations?topk=6"
+    headers = {"Content-Type": "text/plain"}
     response = requests.post(url, headers=headers, data=message)
-    data = response.json()['data']
-    formatted_job_rec_text = ""
-    for i, job in enumerate(data, start=1):
-        formatted_job_rec_text += f"{i}.\nTitle: **{job['title']}**\nCompany: **{job['company']}**\nURL: {job['url']}\n\n"
-    return formatted_job_rec_text
+    data = response.json()["data"]
+    return data
+
+
+def generate_question(message):
+    url = f"{BACKEND_HOST}/questions/{message}"
+    response = requests.get(url)
+    data = response.json()["data"]
+    return data
+
 
 def get_market_trend():
-    global market_trend_data
-    url = 'https://manual-jobai-backend-p34gqsegoa-as.a.run.app/trends'
+    global MARKET_TREND_DATA
+    url = f"{BACKEND_HOST}/trends"
     response = requests.get(url)
-    market_trend_data = response.json()['data']
+    for data in response.json()["data"]:
+        MARKET_TREND_DATA[data["category"]] = data["summary"]
 
-def question_check(message, history):
-    message = message.lower()
-    if "title:" in message:
-        all_formatted_text = "Here are the results for you:\n\n"
-        if market_trend_data != None:
-            all_formatted_text += "Market Trends:\n\n"
-            # all_formatted_text += market_trend_data[0]
-            print(f"Market Trends: {market_trend_data[0]}")
-        recommendation_res = get_recommendation(message)
-        all_formatted_text += recommendation_res
-        return all_formatted_text
-    else:
-        return "Hello! I am Job AI. Please tell me the job title you are looking for, the skills, the categories you are interested in, and your minimum years of experience."
 
-if __name__ == "__main__":
-    get_market_trend()
-    gr.ChatInterface(
-        question_check,
-        chatbot=gr.Chatbot(height=700),
-        textbox=gr.Textbox(placeholder="Tell me about your career background, please start with `title:` you looking for.", container=False, scale=7),
-        title="Job AI",
-        description="JobAI help you to look for a job match with your profile and provide market insights to get you prepare for the job",
-        theme="soft",
-        examples=["Hello", "Am I cool?", "Are tomatoes vegetables?"],
-        cache_examples=True,
-        retry_btn=None,
-        undo_btn="Delete Previous",
-        clear_btn="Clear",
-    ).launch()
+def msg_handler(message, history):
+    message = message.strip().lower()
+    if message.startswith("/match"):
+        resp = "Here are some recommended jobs for you:<br>"
+        recommendations = get_recommendation(message[11:])
+        unique_categories = set()
+        resp += "<ul style=\"text-indent:-20px; margin-left:20px\">"
+        for i, job in enumerate(recommendations):
+            resp += (
+              f"<li><span><i>Title:</i><b> {job['title']}</b><br>"
+              f"<i>Company:</i><b> {job['company']}</b><br>"
+              f"<i>Category:</i> {', '.join(job['categories'])}<br>"
+              f"<i>Link:</i> {job['url']}</span></li>"
+            )
+            for category in job["categories"]:
+                unique_categories.add(category)
+        resp += "</ul><br>"
+        resp += "Market trends and skills for those industries:<br>"
+        for category in unique_categories:
+            resp += f"<strong>{category}</strong>"
+            if category in MARKET_TREND_DATA:
+                resp += f"<ul style=\"text-indent:-20px; margin-left:20px\">"
+                resp += "".join([f"<li>{x}</li>" for x in MARKET_TREND_DATA[category]["trends"]])
+                resp += f"<li>Top common skills include {', '.join(MARKET_TREND_DATA[category]['skills'])}</li></ul>"
+            else:
+                resp += "- N/A<br>"
+        return resp
+    elif message.startswith("/ask"):
+        questions = generate_question(message.split('-')[-1])
+        resp = "Here some potential interview questions for the job:"
+        resp += "<ul style=\"text-indent:-20px; margin-left:20px\">"
+        resp += "".join([f"<li>{x}</li>" for x in questions])
+        resp += "</ul>"
+        return resp
+    elif message == "/help":
+        return HELP_MSG
+    return "Sorry I don't understand your instructions. You may try /help to input the correct command."
+
+
+gr.ChatInterface(
+    msg_handler,
+    chatbot=gr.Chatbot(height=650, placeholder=WELCOME_MSG, value=get_market_trend, container=False),
+    textbox=gr.Textbox(placeholder="Tell me your background? Type /help for more information.", container=False, scale=7),
+    title="Job AI",
+    description="Your ultimate ally in the job market in Singapore. Join the future of job hunting with us. Your success story starts here.",
+    theme=gr.themes.Soft(),
+    retry_btn=None,
+    undo_btn=None,
+    clear_btn="Clear Conversation"
+).launch()
