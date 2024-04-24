@@ -1,6 +1,8 @@
 import gradio as gr
 import requests
 
+market_trend_data = None
+
 def get_recommendation(message):
     url = 'https://manual-jobai-backend-p34gqsegoa-as.a.run.app/recommendations?topk=6'
     headers = {'Content-Type': 'text/plain'}
@@ -12,18 +14,19 @@ def get_recommendation(message):
     return formatted_job_rec_text
 
 def get_market_trend():
-    url = 'https://manual-jobai-backend-p34gqsegoa-as.a.run.app/market_trend'
+    global market_trend_data
+    url = 'https://manual-jobai-backend-p34gqsegoa-as.a.run.app/trends'
     response = requests.get(url)
-    data = response.json()['data']
-    formatted_market_trend_text = ""
-    for i, trend in enumerate(data, start=1):
-        formatted_market_trend_text += f"{i}.\nTitle: **{trend['title']}**\nCompany: **{trend['company']}**\nURL: {trend['url']}\n\n"
-    return formatted_market_trend_text
+    market_trend_data = response.json()['data']
 
 def question_check(message, history):
     message = message.lower()
     if "title:" in message:
         all_formatted_text = "Here are the results for you:\n\n"
+        if market_trend_data != None:
+            all_formatted_text += "Market Trends:\n\n"
+            # all_formatted_text += market_trend_data[0]
+            print(f"Market Trends: {market_trend_data[0]}")
         recommendation_res = get_recommendation(message)
         all_formatted_text += recommendation_res
         return all_formatted_text
@@ -31,6 +34,7 @@ def question_check(message, history):
         return "Hello! I am Job AI. Please tell me the job title you are looking for, the skills, the categories you are interested in, and your minimum years of experience."
 
 if __name__ == "__main__":
+    get_market_trend()
     gr.ChatInterface(
         question_check,
         chatbot=gr.Chatbot(height=700),
