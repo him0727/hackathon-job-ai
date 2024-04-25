@@ -16,7 +16,7 @@ HELP_MSG = """
   <tr>
     <td>/ask {JOB_URL}</td>
     <td>{JOB_URL} is the job link retrieved from /match. Just pick your interested job's link.</td>
-    <td>Return some potential interview questions for that role that covers its company values and job requirements.</td>
+    <td>Return 5 potential interview questions with hints for the answers for that role that covers its company values and job requirements.</td>
   </tr>
   <tr>
     <td>/help</td>
@@ -48,10 +48,8 @@ def get_recommendation(message):
 
 
 def generate_question(message):
-    url = f"{BACKEND_HOST}/questions/{message}"
-    response = requests.get(url)
-    data = response.json()["data"]
-    return data
+    url = f"{BACKEND_HOST}/questions_answers/{message}"
+    return requests.get(url).content.decode("utf-8")
 
 
 def get_market_trend():
@@ -90,15 +88,12 @@ def msg_handler(message, history):
                 resp += "- N/A<br>"
         return resp
     elif message.lower().startswith("/ask"):
-        questions = generate_question(message.split('-')[-1])
-        resp = "Here some potential interview questions for the job:"
-        resp += "<ul style=\"text-indent:-20px; margin-left:20px\">"
-        resp += "".join([f"<li>{x}</li>" for x in questions])
-        resp += "</ul>"
+        resp = "Here are some potential interview questions for the role:<br><br>"
+        resp += generate_question(message.split('-')[-1])
         return resp
     elif message.lower() == "/help":
         return HELP_MSG
-    return "Sorry I don't understand your instructions. You may type /help to find the correct command."
+    return "Sorry I don't understand your instructions. You may type */help* to find the correct command."
 
 
 gr.ChatInterface(

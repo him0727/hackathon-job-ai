@@ -17,6 +17,12 @@ TRENDS_CACHE = {}
 BQ_EMBEDDINGS_TABLE = "jobai-420303.jobai_data.job_data_embeddings"
 BQ_JOBS_TABLE = "jobai-420303.jobai_data.job_data_deduplicated"
 BQ_JOBS_SUMMARY_TABLE = "jobai-420303.jobai_data.job_category_summary"
+LLM_PARAMS = {
+    "candidate_count": 1,
+    "max_output_tokens": 1024,
+    "temperature": 0.9,
+    "top_p": 0.9
+}
 
 bq_client = bigquery.Client()
 embedding_model = TextEmbeddingModel.from_pretrained("textembedding-gecko")
@@ -82,16 +88,9 @@ def get_recommendations():
 
 @app.route("/questions/<id>", methods=["GET"])
 def generate_interview_questions(id):
-    job_query = f"""
-        SELECT company, company_description, title, description, skills, other_requirements 
-        FROM {BQ_JOBS_TABLE}
-        WHERE id = "{id}"
-    """
-    data = [row for row in bq_client.query_and_wait(job_query)]
+    data = query_job_by_id(id)
     if not data:
-        logging.info(f"Unable to get job {id} from table.")
         return jsonify({"error": "No such job in our records."}), 404
-    data = data[0]
     
     prompt_template = f"""
         Generate 5 interview questions for the following job. Those questions should be specific to the company business and the company values and the role requirements.
@@ -110,25 +109,59 @@ def generate_interview_questions(id):
         JSON:
     """
 
-    parameters = {
-        "candidate_count": 1,
-        "max_output_tokens": 1024,
-        "temperature": 0.9,
-        "top_p": 0.9
-    }
-    resp = ll_text_model.predict(prompt_template, **parameters).text.strip()
-    logging.info(type(resp))
-    logging.info(resp[:4])
+    resp = ll_text_model.predict(prompt_template, **LLM_PARAMS).text.strip()
     if resp.startswith("```"):
-        logging.info("yes!!")
         resp = resp[resp.find("\n") + 1 : -3]
     resp = json.loads(resp)
     return jsonify({"data": resp["questions"]})
 
 
+@app.route("/questions_answers/<id>", methods=["GET"])
+def generate_interview_questions_with_answers(id):
+    data = query_job_by_id(id)
+    if not data:
+        return jsonify({"error": "No such job in our records."}), 404
+    
+    prompt_template = f"""
+        Generate 5 interview questions for the following job post. Those questions should be specific to the company business and the company values and the role requirements.
+        Under each question, it should indicate why this question will be asked and should explain how to answer this question properly in a few sentences. Do not include duplicate information.
+        The response structure should look like:
+        **Q1. Question to ask**
+
+        **Why:** Reason to ask
+
+        **Hints**: Hints to asnwer
+        
+        
+        Here is the job post:
+        Title: {data["title"]}
+        Company: {data["company"]}
+        Job description: {data["description"]}
+        Company description: {data["company_description"] or "N/A"}
+        Skills: {", ".join(json.loads(data["skills"]))}
+        Other requirements: {data["other_requirements"] or "N/A"}
+    """
+
+    resp = ll_text_model.predict(prompt_template, **LLM_PARAMS).text.strip()
+    return resp # return markdown directly
+
+ 
 @app.route("/", methods=["GET"])
 def index():
     return jsonify({"status": "UP"})
+
+
+def query_job_by_id(id):
+    job_query = f"""
+        SELECT company, company_description, title, description, skills, other_requirements 
+        FROM {BQ_JOBS_TABLE}
+        WHERE id = "{id}"
+    """
+    data = [row for row in bq_client.query_and_wait(job_query)]
+    if not data:
+        logging.info(f"Unable to get job {id} from table.")
+        return None
+    return data[0]
 
 
 if __name__ == "__main__":
