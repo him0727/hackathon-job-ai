@@ -75,7 +75,7 @@ def msg_handler(message, history):
               f"<i>Link:</i> {job['url']}</span></li>"
             )
             for category in job["categories"]:
-                unique_categories.add(category)
+                unique_categories.add("Food and Beverage" if category == "F&B" else category)
         resp += "</ul><br>"
         resp += "Market trends and skills for those industries:<br>"
         for category in unique_categories:
@@ -85,7 +85,7 @@ def msg_handler(message, history):
                 resp += "".join([f"<li>{x}</li>" for x in MARKET_TREND_DATA[category]["trends"]])
                 resp += f"<li>Top common skills include {', '.join(MARKET_TREND_DATA[category]['skills'])}</li></ul>"
             else:
-                resp += "- N/A<br>"
+                resp += "<br>- N/A<br>"
         return resp
     elif message.lower().startswith("/ask"):
         resp = "Here are some potential interview questions for the role:<br><br>"
