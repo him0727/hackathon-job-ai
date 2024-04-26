@@ -17,16 +17,16 @@ Job AI is a serverless and cloud native solution hosted on Google Cloud Platform
 ![Breif Architecture](/docs/architecture.png)
 
 #### Trend Analysis
-- Get embedding results for each industry category from BigQuery pre-generated job embeddings table
+- Get embedding results for each industry category from Cloud Storage (export from BigQuery)
 - Use K-means clustering to divide all jobs into K clusters
-- Find the closest job to the centroid for each cluster and sort them
+- Find the closest job to the centroid for each cluster and sort them ascendingly
 - Use map-reduce technique to aggregate the summary results for those jobs retrieved from Large Language Model (Google PaLM 2 for Text) by prompt engineering
 
 #### Recommendations
 - Get embedding result for user's input by Natural Language Processing (Google Text Embedding Model)
 - Perform vector search on BigQuery pre-generated job embeddings table
-- Find the top K records with shorter distance to user's input embedding
+- Find the top K records with shortest distance to user's input embedding
 
 #### Interview Questions Generation
 - Retrieve the requested job from BigQuery
-- Get interview questions and hints for the answers generated from Large Language Model (Google PaLM 2 for Text) by prompt engineerin
+- Get interview questions and hints for the answers generated from Large Language Model (Google PaLM 2 for Text) by prompt engineering
