@@ -5,12 +5,12 @@ Link: https://jobai-frontend-p34gqsegoa-as.a.run.app/
 
 ## Features
 AI-driven platform to match job seekers with ideal job opportunities based on their profiles and interests. Provides valuable insights into market trends and required skills for specific roles.
-- Market trend analysis and skillset demands
-  Show the market trends and most in-demand skills for 43 industries
-- AI-powered job recommendations
-  Input your background and goal in any text format to get tailored job rcommendations
-- Customized potential interview questions
-  Generate potential interview questions with hints for the answers for your interested role's company values, background and role requirements
+- **Market trend analysis and skillset demands**: Show the market trends and most in-demand skills for 43 industries
+- **AI-powered job recommendations**: Input your background and goal in any text format to get tailored job rcommendations
+- **Customized potential interview questions**: Generate potential interview questions with hints for the answers for your interested role's company values, background and role requirements
+
+## Demo
+![Breif Architecture](/docs/demo.gif)
 
 ## Architecture
 Job AI is a serverless and cloud native solution hosted on Google Cloud Platform (GCP). It harnesses the immense power of Generative AI to revolutionize the job-seeking and interview preparation experience. All raw, preprocessed and refeined data is stored in BigQuery.
